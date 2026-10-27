@@ -71,19 +71,6 @@ jobs:
           cat build_output.log
           echo "==================================================================="
 
-      - name: Push Build Log to build-logs Branch
-        if: always()
-        run: |
-          git checkout --orphan build-logs || git checkout build-logs || true
-          git rm -rf . || true
-          cp build_output.log README.md
-          cp build_output.log build_output.log
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md build_output.log
-          git commit -m "Build log for run ${{ github.run_id }}" || true
-          git push -f origin build-logs || true
-
       - name: Upload Build Log
         if: always()
         uses: actions/upload-artifact@v4
