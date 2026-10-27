@@ -14,7 +14,7 @@ data class Exercise(
 
 data class WorkoutPlan(
     val id: String = UUID.randomUUID().toString(),
-    val title: String,
+    val title: String = "",
     val targetCalories: Int = 1000,
     val burnedCalories: Int = 918,
     val exercises: List<Exercise> = emptyList()

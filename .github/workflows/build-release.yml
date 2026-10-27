@@ -46,12 +46,43 @@ jobs:
           ./gradlew assembleRelease assembleDebug --stacktrace --no-daemon 2>&1 | tee build_output.log
         continue-on-error: true
 
+      - name: Publish Build Summary
+        if: always()
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.build_apk.outcome }}" = "success" ]; then
+            echo "🎉 Build Succeeded!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Generated APK files:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            find app/build/outputs/apk -type f -name "*.apk" >> $GITHUB_STEP_SUMMARY 2>&1 || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Build Failed. Error output below:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 120 build_output.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Print Entire Build Log to Console
         if: always()
         run: |
           echo "====================== FULL GRADLE BUILD LOG ======================"
           cat build_output.log
           echo "==================================================================="
+
+      - name: Push Build Log to build-logs Branch
+        if: always()
+        run: |
+          git checkout --orphan build-logs || git checkout build-logs || true
+          git rm -rf . || true
+          cp build_output.log README.md
+          cp build_output.log build_output.log
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md build_output.log
+          git commit -m "Build log for run ${{ github.run_id }}" || true
+          git push -f origin build-logs || true
 
       - name: Upload Build Log
         if: always()
@@ -67,6 +98,13 @@ jobs:
           name: LifeOS-APKs
           path: app/build/outputs/apk/**/*.apk
           retention-days: 30
+
+      - name: Create GitHub Release with APK
+        if: steps.build_apk.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v2.0.0 app/build/outputs/apk/release/*.apk --title "LifeOS v2.0.0 Release" --notes "Release build of LifeOS Android Application" --clobber || true
 
       - name: Verify Build Outcome
         if: steps.build_apk.outcome != 'success'

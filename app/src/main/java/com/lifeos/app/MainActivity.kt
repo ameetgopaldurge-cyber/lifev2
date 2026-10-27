@@ -22,6 +22,7 @@ import com.lifeos.app.feature.home.HomeViewModel
 import com.lifeos.app.feature.income.IncomeViewModel
 import com.lifeos.app.feature.planner.PlannerViewModel
 import com.lifeos.app.feature.profile.ProfileViewModel
+import com.lifeos.app.feature.skills.SkillsViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
